@@ -13,7 +13,6 @@ parsed as (
     select
         transaction_id,
 
-        -- Source format is M/D/YYYY H:MM:SS (US locale)
         try_cast(strptime(created_at, '%m/%d/%Y %H:%M:%S') as timestamp)  as created_at_ts,
         cast(
             try_cast(strptime(created_at, '%m/%d/%Y %H:%M:%S') as timestamp)
@@ -38,7 +37,7 @@ parsed as (
 normalized as (
     select
         *,
-        -- 'process' appears in the source as a misspelling of 'processed'
+
         case when status_raw = 'process' then 'processed' else status_raw end as status,
         (status_raw = 'process')                                               as _status_normalized
 

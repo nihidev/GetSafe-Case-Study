@@ -5,24 +5,6 @@
     )
 }}
 
-/*
-    Part I deliverable. One row per (party, month).
-
-    Only 'processed' transactions are included (status normalized in Silver —
-    'process' variant treated as 'processed', reducing total recon gap to EUR 37.94).
-
-    written_premium = gross amount booked at transaction date
-    refunded_premium = sum of refunded amounts in the same period
-    net_premium      = written_premium - refunded_premium
-
-    Reconciliation note: the accounting benchmark uses gross written premium,
-    so the comparison in gold_fct_accounting_reconciliation uses written_premium.
-    net_premium is provided for Finance reporting and BI drilldown.
-
-    earned_premium prorates by days remaining in month at transaction date.
-    Production: replace transaction_date with actual policy inception date.
-*/
-
 with processed as (
 
     select

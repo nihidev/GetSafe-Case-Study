@@ -18,7 +18,7 @@ models:
           - not_null
           - unique:
               config:
-                severity: warn   # 2 duplicate IDs exist in source data — likely double-ingestion
+                severity: warn
 
       - name: created_at_ts
         description: Parsed transaction timestamp
