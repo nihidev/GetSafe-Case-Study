@@ -1,0 +1,7 @@
+getsafe_analytics:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "{{ env_var('GETSAFE_DB_PATH', '../data/duckdb/getsafe.duckdb') }}"
+      threads: 4

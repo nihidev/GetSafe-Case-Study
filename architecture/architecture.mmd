@@ -1,0 +1,56 @@
+flowchart TD
+
+    subgraph SOURCES["Source Data"]
+        CSV["Raw Transaction Data\n(CSV · 2,660 rows)\ntransaction_id · created_at\npremium_amount · status · charged_party"]
+        CSV2["Customer Data\n(Part II — synthetic sample)\nuser_id · acquisition_date\nstarted_at · churned_at\nmonthly_premium · product_group"]
+        ACCT["Accounting Benchmark\n(dbt seed: accounting_closing.csv)\nparty · month · accounting_premium\n12 rows — source of truth for reconciliation"]
+    end
+
+    subgraph BRONZE["Bronze Layer  ·  schema: bronze"]
+        B1["bronze_raw_transactions\nExact copy of source + provenance metadata\n_source_file · _ingested_at\nNo transformations — immutable"]
+    end
+
+    subgraph SILVER["Silver Layer  ·  schema: silver"]
+        S1["silver_transactions\nParsed timestamps · Cast premium to DOUBLE\nNormalized status ('process' → 'processed')\nDQ flags: _dq_flags · _is_clean"]
+        S2["silver_customers\nOne row per customer contract\nstarted_at · churned_at\nmonthly_premium · product_group\nProduction: real CSV · Demo: synthetic sample"]
+        SNP["snp_silver_transactions\nSCD Type 2 snapshot\nTracks changes to status + premium_amount\nPoint-in-time audit for month-close"]
+    end
+
+    subgraph GOLD["Gold Layer  ·  schema: gold"]
+        G1["gold_fct_monthly_premiums\nOne row per (party, month)\nwritten_premium · earned_premium\ntransaction_count\nPart I deliverable"]
+        G2["gold_fct_accounting_reconciliation\nFinance vs Accounting comparison\ndelta · delta_pct · reconciliation_status\nMATCH / NEAR_MATCH / DISCREPANCY"]
+        G3["gold_fct_customer_activity_daily\nOne row per (user_id, activity_date)\ndaily_premium = monthly / days_in_month\nIncremental · delete+insert\nPart II KPI mart"]
+    end
+
+    subgraph OUTPUTS["Outputs"]
+        BI["BI Tool\nKPI 1: COUNT(user_id) WHERE date = X\nKPI 2: SUM(daily_premium) BETWEEN A AND B\nKPI 3: SUM(daily_premium) WHERE date ≤ target"]
+        REPORT["Reconciliation Report\n7 MATCH · 4 NEAR_MATCH · 1 DISCREPANCY\nTotal delta: EUR 37.94 (0.28%)"]
+    end
+
+    CSV  --> B1
+    CSV2 --> S2
+    ACCT --> G2
+
+    B1 --> S1
+    S1 --> SNP
+
+    S1 --> G1
+    S2 --> G3
+    G1 --> G2
+    G1 --> BI
+    G3 --> BI
+    G2 --> REPORT
+
+    classDef bronze   fill:#CD7F32,color:#fff,stroke:#8B5E3C
+    classDef silver   fill:#708090,color:#fff,stroke:#4A5568
+    classDef snapshot fill:#9C27B0,color:#fff,stroke:#6A0080
+    classDef gold     fill:#B8860B,color:#fff,stroke:#8B6914
+    classDef source   fill:#1E40AF,color:#fff,stroke:#1E3A8A
+    classDef output   fill:#065F46,color:#fff,stroke:#047857
+
+    class B1 bronze
+    class S1,S2 silver
+    class SNP snapshot
+    class G1,G2,G3 gold
+    class CSV,CSV2,ACCT source
+    class BI,REPORT output

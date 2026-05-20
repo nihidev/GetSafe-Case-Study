@@ -1,0 +1,46 @@
+name: 'getsafe_analytics'
+version: '1.0.0'
+config-version: 2
+
+profile: 'getsafe_analytics'
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+snapshot-paths: ["snapshots"]
+macro-paths: ["macros"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  getsafe_analytics:
+    bronze:
+      +schema: bronze
+      +materialized: table
+      +tags: ['bronze']
+
+    silver:
+      +schema: silver
+      +materialized: table
+      +tags: ['silver']
+
+    gold:
+      +schema: gold
+      +materialized: table
+      +tags: ['gold']
+
+seeds:
+  getsafe_analytics:
+    +schema: seeds
+    accounting_closing:
+      +column_types:
+        party: varchar
+        month: varchar
+        accounting_premium: double
+
+snapshots:
+  getsafe_analytics:
+    +target_schema: snapshots
